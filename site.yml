@@ -1,0 +1,34 @@
+---
+- name: WordBlitz Monitoring Setup
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  pre_tasks:
+    - name: Validate required variables
+      ansible.builtin.assert:
+        that:
+          - azure_subscription_id is defined and azure_subscription_id != "your-subscription-id-here"
+          - azure_resource_group is defined
+          - azure_location is defined
+          - law_name is defined
+          - grafana_name is defined
+          - db_vm_name is defined
+          - app_vm_name is defined
+          - db_vm_host is defined
+          - app_vm_host is defined
+          - ssh_user is defined
+          - db_vm_computer_name is defined
+          - app_vm_computer_name is defined
+          - app_vm_perf_computer_name is defined
+        fail_msg: >-
+          Required variables are not set. Copy group_vars/all.yml.example to
+          group_vars/all.yml and fill in your values.
+
+  roles:
+    - log_analytics
+    - vm_identity
+    - azure_monitor_agent
+    - data_collection_rule
+    - vm_logging
+    - grafana

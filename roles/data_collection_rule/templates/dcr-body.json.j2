@@ -1,0 +1,61 @@
+{
+  "location": "{{ azure_location }}",
+  "properties": {
+    "dataSources": {
+      "performanceCounters": [
+        {
+          "name": "perfCounters",
+          "streams": ["Microsoft-Perf"],
+          "samplingFrequencyInSeconds": {{ perf_sampling_interval }},
+          "counterSpecifiers": [
+            "\\Processor Information(_Total)\\% Processor Time",
+            "\\Processor Information(_Total)\\% Privileged Time",
+            "\\Processor Information(_Total)\\% User Time",
+            "\\Memory\\Available Bytes",
+            "\\Memory\\% Used Memory",
+            "\\Memory\\Used Memory MBytes",
+            "\\PhysicalDisk(_Total)\\Avg. Disk sec/Transfer",
+            "\\PhysicalDisk(_Total)\\Avg. Disk sec/Read",
+            "\\PhysicalDisk(_Total)\\Avg. Disk sec/Write",
+            "\\PhysicalDisk(_Total)\\Disk Transfers/sec",
+            "\\PhysicalDisk(_Total)\\Disk Reads/sec",
+            "\\PhysicalDisk(_Total)\\Disk Writes/sec",
+            "\\PhysicalDisk(_Total)\\Disk Read Bytes/sec",
+            "\\PhysicalDisk(_Total)\\Disk Write Bytes/sec",
+            "\\Network(_Total)\\Bytes Received/sec",
+            "\\Network(_Total)\\Bytes Transmitted/sec",
+            "\\Logical Disk(_Total)\\% Used Space",
+            "\\Logical Disk(_Total)\\Free Megabytes",
+            "\\Logical Disk(_Total)\\% Free Inodes"
+          ]
+        }
+      ],
+      "syslog": [
+        {
+          "name": "syslogSource",
+          "streams": ["Microsoft-Syslog"],
+          "facilityNames": {{ syslog_facilities | to_json }},
+          "logLevels": {{ syslog_log_levels | to_json }}
+        }
+      ]
+    },
+    "destinations": {
+      "logAnalytics": [
+        {
+          "workspaceResourceId": "{{ law_resource_id }}",
+          "name": "law-dest"
+        }
+      ]
+    },
+    "dataFlows": [
+      {
+        "streams": ["Microsoft-Perf"],
+        "destinations": ["law-dest"]
+      },
+      {
+        "streams": ["Microsoft-Syslog"],
+        "destinations": ["law-dest"]
+      }
+    ]
+  }
+}

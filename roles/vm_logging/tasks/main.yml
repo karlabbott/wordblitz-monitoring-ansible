@@ -1,0 +1,47 @@
+---
+- name: Configure PostgreSQL syslog logging on DB VM
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }} "
+      grep -q '^log_destination' /var/lib/pgsql/data/postgresql.conf 2>/dev/null && echo EXISTS || {
+        echo \"log_destination = 'syslog'\" | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo \"syslog_facility = 'LOCAL0'\" | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo \"syslog_ident = 'postgres'\" | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo 'log_connections = on' | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo 'log_disconnections = on' | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo 'log_duration = on' | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo 'log_min_duration_statement = 100' | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo 'log_checkpoints = on' | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        echo 'log_lock_waits = on' | sudo tee -a /var/lib/pgsql/data/postgresql.conf;
+        sudo systemctl restart postgresql;
+      }
+      "
+  register: pg_syslog_result
+  changed_when: "'EXISTS' not in pg_syslog_result.stdout"
+
+- name: Configure Nginx syslog logging on App VM
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ app_vm_host }} "
+      grep -q 'syslog:server=unix' /etc/nginx/nginx.conf 2>/dev/null && echo EXISTS || {
+        sudo sed -i '/http {/a\\    access_log syslog:server=unix:/dev/log,facility=local1,tag=nginx,severity=info combined;' /etc/nginx/nginx.conf;
+        sudo sed -i '/http {/a\\    error_log syslog:server=unix:/dev/log,facility=local1,tag=nginx,severity=error;' /etc/nginx/nginx.conf;
+        sudo nginx -t && sudo systemctl reload nginx;
+      }
+      "
+  register: nginx_syslog_result
+  changed_when: "'EXISTS' not in nginx_syslog_result.stdout"
+
+- name: Restart rsyslog on DB VM to pick up AMA config
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
+      "sudo systemctl restart rsyslog"
+  changed_when: true
+
+- name: Restart rsyslog on App VM to pick up AMA config
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ app_vm_host }}
+      "sudo systemctl restart rsyslog"
+  changed_when: true

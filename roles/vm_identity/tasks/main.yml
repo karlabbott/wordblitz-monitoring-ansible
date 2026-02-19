@@ -1,0 +1,27 @@
+---
+- name: Enable system-assigned managed identity on DB VM
+  ansible.builtin.command:
+    cmd: >-
+      az vm identity assign
+      --resource-group {{ azure_resource_group }}
+      --name {{ db_vm_name }}
+      --subscription {{ azure_subscription_id }}
+      --output json
+  register: db_identity_result
+  changed_when: true
+
+- name: Enable system-assigned managed identity on App VM
+  ansible.builtin.command:
+    cmd: >-
+      az vm identity assign
+      --resource-group {{ azure_resource_group }}
+      --name {{ app_vm_name }}
+      --subscription {{ azure_subscription_id }}
+      --output json
+  register: app_identity_result
+  changed_when: true
+
+- name: Store VM identity principal IDs
+  ansible.builtin.set_fact:
+    db_vm_principal_id: "{{ (db_identity_result.stdout | from_json).systemAssignedIdentity }}"
+    app_vm_principal_id: "{{ (app_identity_result.stdout | from_json).systemAssignedIdentity }}"

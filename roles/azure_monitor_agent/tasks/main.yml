@@ -1,0 +1,24 @@
+---
+- name: Install Azure Monitor Agent on DB VM
+  ansible.builtin.command:
+    cmd: >-
+      az vm extension set
+      --resource-group {{ azure_resource_group }}
+      --vm-name {{ db_vm_name }}
+      --name AzureMonitorLinuxAgent
+      --publisher Microsoft.Azure.Monitor
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Install Azure Monitor Agent on App VM
+  ansible.builtin.command:
+    cmd: >-
+      az vm extension set
+      --resource-group {{ azure_resource_group }}
+      --vm-name {{ app_vm_name }}
+      --name AzureMonitorLinuxAgent
+      --publisher Microsoft.Azure.Monitor
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true

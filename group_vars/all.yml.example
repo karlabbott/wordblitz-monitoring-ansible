@@ -1,0 +1,59 @@
+# Azure subscription where monitoring resources will be created
+azure_subscription_id: "your-subscription-id-here"
+
+# Resource group containing the VMs to monitor
+azure_resource_group: "your-resource-group"
+
+# Azure region
+azure_location: "eastus"
+
+# Log Analytics Workspace name
+law_name: "your-law-name"
+
+# Managed Grafana instance name
+grafana_name: "your-grafana-name"
+
+# Database VM
+db_vm_name: "your-db-vm-name"
+db_vm_host: "1.2.3.4"
+
+# Application VM
+app_vm_name: "your-app-vm-name"
+app_vm_host: "5.6.7.8"
+
+# SSH username for both VMs
+ssh_user: "azureuser"
+
+# Computer names as they appear in Log Analytics
+# Run: az monitor log-analytics query --workspace <id> --analytics-query "Heartbeat | distinct Computer"
+# to discover these after initial data collection
+db_vm_computer_name: "your-db-hostname"
+app_vm_computer_name: "your-app-hostname"
+app_vm_perf_computer_name: "your-app-fqdn"
+
+# Perf counter sampling interval in seconds
+perf_sampling_interval: 60
+
+# Syslog facilities to collect
+syslog_facilities:
+  - auth
+  - authpriv
+  - daemon
+  - kern
+  - syslog
+  - user
+  - local0
+  - local1
+  - local2
+  - local3
+
+# Syslog log levels to collect
+syslog_log_levels:
+  - Debug
+  - Info
+  - Notice
+  - Warning
+  - Error
+  - Critical
+  - Alert
+  - Emergency

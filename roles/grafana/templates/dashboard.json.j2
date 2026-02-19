@@ -1,0 +1,232 @@
+{
+  "dashboard": {
+    "title": "WordBlitz Infrastructure Dashboard",
+    "tags": ["wordblitz", "azure", "postgresql"],
+    "timezone": "browser",
+    "refresh": "1m",
+    "time": { "from": "now-6h", "to": "now" },
+    "panels": [
+      {
+        "title": "DB VM — CPU Usage %",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 0 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Monitor",
+          "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Percentage CPU", "timeGrain": "PT1M", "aggregation": "Average" },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}] }, "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "App VM — CPU Usage %",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 0 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Monitor",
+          "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Percentage CPU", "timeGrain": "PT1M", "aggregation": "Average" },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}] }, "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "DB VM — Memory Usage %",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 8 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Perf\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ObjectName == \"Memory\" and CounterName == \"% Used Memory\"\n| summarize avg(CounterValue) by bin(TimeGenerated, 1m)\n| order by TimeGenerated asc",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{"color":"green","value":null},{"color":"yellow","value":80},{"color":"red","value":95}] }, "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "App VM — Memory Usage %",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 8 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Perf\n| where Computer in (\"{{ app_vm_computer_name }}\", \"{{ app_vm_perf_computer_name }}\")\n| where ObjectName == \"Memory\" and CounterName == \"% Used Memory\"\n| summarize avg(CounterValue) by bin(TimeGenerated, 1m)\n| order by TimeGenerated asc",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{"color":"green","value":null},{"color":"yellow","value":80},{"color":"red","value":95}] }, "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "DB VM — Disk I/O (Read/Write Bytes/sec)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 16 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Disk Read Bytes", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "A" },
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Disk Write Bytes", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "B" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "Bps", "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "App VM — Network Traffic",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 16 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Network In Total", "timeGrain": "PT1M", "aggregation": "Total" }, "subscription": "{{ azure_subscription_id }}", "refId": "A" },
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Network Out Total", "timeGrain": "PT1M", "aggregation": "Total" }, "subscription": "{{ azure_subscription_id }}", "refId": "B" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "Bps", "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "DB VM — OS Disk Bandwidth Used %",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 24 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Monitor",
+          "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "OS Disk Bandwidth Consumed Percentage", "timeGrain": "PT1M", "aggregation": "Average" },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}] }, "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "App VM — OS Disk Bandwidth Used %",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 24 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Monitor",
+          "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "OS Disk Bandwidth Consumed Percentage", "timeGrain": "PT1M", "aggregation": "Average" },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "unit": "percent", "min": 0, "max": 100, "thresholds": { "mode": "absolute", "steps": [{"color":"green","value":null},{"color":"yellow","value":70},{"color":"red","value":90}] }, "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "DB VM — Disk IOPS",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 32 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Disk Read Operations/Sec", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "A" },
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Disk Write Operations/Sec", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "B" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "iops", "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "App VM — Disk IOPS",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 32 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Disk Read Operations/Sec", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "A" },
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Disk Write Operations/Sec", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "B" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "iops", "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "PostgreSQL — Recent Queries by Duration",
+        "type": "table",
+        "gridPos": { "h": 8, "w": 24, "x": 0, "y": 40 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"duration:\"\n| extend duration_ms = extract(\"duration: ([0-9.]+) ms\", 1, SyslogMessage)\n| extend query_text = extract(\"statement: (.+)\", 1, SyslogMessage)\n| where isnotempty(duration_ms)\n| project TimeGenerated, Duration_ms = todouble(duration_ms), Query = coalesce(query_text, \"(no statement logged)\")\n| order by Duration_ms desc\n| take 50",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }]
+      },
+      {
+        "title": "PostgreSQL — Connections",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 48 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"connection authorized\" or SyslogMessage contains \"connection received\"\n| summarize Connections = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "PostgreSQL — Checkpoint Activity",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 48 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"checkpoint\"\n| summarize Checkpoints = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "App VM — HTTP Requests (Nginx)",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 56 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Syslog\n| where Computer == \"{{ app_vm_computer_name }}\"\n| where ProcessName == \"nginx\"\n| summarize Requests = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "All VMs — Syslog Errors & Warnings",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 56 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [{
+          "queryType": "Azure Log Analytics",
+          "azureLogAnalytics": {
+            "query": "Syslog\n| where SeverityLevel in (\"err\", \"crit\", \"alert\", \"emerg\", \"warning\")\n| summarize Count = count() by bin(TimeGenerated, 5m), Computer, SeverityLevel\n| order by TimeGenerated asc",
+            "resource": "{{ law_resource_id }}"
+          },
+          "subscription": "{{ azure_subscription_id }}"
+        }],
+        "fieldConfig": { "defaults": { "color": { "mode": "palette-classic" } }, "overrides": [] },
+        "options": { "tooltip": { "mode": "multi" } }
+      },
+      {
+        "title": "DB VM — Network Traffic",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 0, "y": 64 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Network In Total", "timeGrain": "PT1M", "aggregation": "Total" }, "subscription": "{{ azure_subscription_id }}", "refId": "A" },
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Network Out Total", "timeGrain": "PT1M", "aggregation": "Total" }, "subscription": "{{ azure_subscription_id }}", "refId": "B" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "Bps", "color": { "mode": "palette-classic" } }, "overrides": [] }
+      },
+      {
+        "title": "Both VMs — Available Memory",
+        "type": "timeseries",
+        "gridPos": { "h": 8, "w": 12, "x": 12, "y": 64 },
+        "datasource": { "uid": "azure-monitor-oob", "type": "grafana-azure-monitor-datasource" },
+        "targets": [
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ db_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Available Memory Bytes", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "A" },
+          { "queryType": "Azure Monitor", "azureMonitor": { "resourceGroup": "{{ azure_resource_group }}", "metricDefinition": "Microsoft.Compute/virtualMachines", "resourceName": "{{ app_vm_name }}", "metricNamespace": "Microsoft.Compute/virtualMachines", "metricName": "Available Memory Bytes", "timeGrain": "PT1M", "aggregation": "Average" }, "subscription": "{{ azure_subscription_id }}", "refId": "B" }
+        ],
+        "fieldConfig": { "defaults": { "unit": "bytes", "color": { "mode": "palette-classic" } }, "overrides": [] }
+      }
+    ],
+    "schemaVersion": 39
+  },
+  "overwrite": true
+}

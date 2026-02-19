@@ -1,0 +1,90 @@
+---
+- name: Build DCR resource path
+  ansible.builtin.set_fact:
+    dcr_url: >-
+      https://management.azure.com/subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ azure_resource_group }}/providers/Microsoft.Insights/dataCollectionRules/{{ law_name }}-dcr?api-version=2022-06-01
+    dcr_id: >-
+      /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ azure_resource_group }}/providers/Microsoft.Insights/dataCollectionRules/{{ law_name }}-dcr
+
+- name: Generate DCR body
+  ansible.builtin.template:
+    src: dcr-body.json.j2
+    dest: /tmp/dcr-body.json
+    mode: "0644"
+
+- name: Create Data Collection Rule via REST API
+  ansible.builtin.command:
+    cmd: >-
+      az rest --method PUT
+      --url "{{ dcr_url }}"
+      --body @/tmp/dcr-body.json
+      --output json
+  register: dcr_result
+  changed_when: true
+
+- name: Store DCR immutable ID
+  ansible.builtin.set_fact:
+    dcr_immutable_id: "{{ (dcr_result.stdout | from_json).properties.immutableId }}"
+
+- name: Grant Monitoring Metrics Publisher to DB VM identity
+  ansible.builtin.command:
+    cmd: >-
+      az role assignment create
+      --assignee {{ db_vm_principal_id }}
+      --role "Monitoring Metrics Publisher"
+      --scope {{ dcr_id }}
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Grant Monitoring Metrics Publisher to App VM identity
+  ansible.builtin.command:
+    cmd: >-
+      az role assignment create
+      --assignee {{ app_vm_principal_id }}
+      --role "Monitoring Metrics Publisher"
+      --scope {{ dcr_id }}
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Associate DCR with DB VM
+  ansible.builtin.command:
+    cmd: >-
+      az monitor data-collection rule association create
+      --name {{ db_vm_name }}-dcr-assoc
+      --resource /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ azure_resource_group }}/providers/Microsoft.Compute/virtualMachines/{{ db_vm_name }}
+      --rule-id {{ dcr_id }}
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Associate DCR with App VM
+  ansible.builtin.command:
+    cmd: >-
+      az monitor data-collection rule association create
+      --name {{ app_vm_name }}-dcr-assoc
+      --resource /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ azure_resource_group }}/providers/Microsoft.Compute/virtualMachines/{{ app_vm_name }}
+      --rule-id {{ dcr_id }}
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Clean up DCR body file
+  ansible.builtin.file:
+    path: /tmp/dcr-body.json
+    state: absent
+
+- name: Restart Azure Monitor Agent on DB VM
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
+      "sudo systemctl restart azuremonitoragent"
+  changed_when: true
+
+- name: Restart Azure Monitor Agent on App VM
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ app_vm_host }}
+      "sudo systemctl restart azuremonitoragent"
+  changed_when: true

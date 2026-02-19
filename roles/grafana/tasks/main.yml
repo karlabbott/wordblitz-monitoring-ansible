@@ -1,0 +1,104 @@
+---
+- name: Create Managed Grafana instance
+  ansible.builtin.command:
+    cmd: >-
+      az grafana create
+      --name {{ grafana_name }}
+      --resource-group {{ azure_resource_group }}
+      --location {{ azure_location }}
+      --subscription {{ azure_subscription_id }}
+      --output json
+  register: grafana_result
+  changed_when: true
+
+- name: Store Grafana details
+  ansible.builtin.set_fact:
+    grafana_principal_id: "{{ (grafana_result.stdout | from_json).identity.principalId }}"
+    grafana_endpoint: "{{ (grafana_result.stdout | from_json).properties.endpoint }}"
+
+- name: Grant Grafana Monitoring Reader on subscription
+  ansible.builtin.command:
+    cmd: >-
+      az role assignment create
+      --assignee {{ grafana_principal_id }}
+      --role "Monitoring Reader"
+      --scope /subscriptions/{{ azure_subscription_id }}
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Grant Grafana Log Analytics Reader on workspace
+  ansible.builtin.command:
+    cmd: >-
+      az role assignment create
+      --assignee {{ grafana_principal_id }}
+      --role "Log Analytics Reader"
+      --scope {{ law_resource_id }}
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Write Grafana data source definition
+  ansible.builtin.copy:
+    content: |
+      {
+        "name": "Azure Monitor",
+        "type": "grafana-azure-monitor-datasource",
+        "access": "proxy",
+        "uid": "azure-monitor-oob",
+        "isDefault": true,
+        "jsonData": {
+          "azureAuthType": "msi",
+          "subscriptionId": "{{ azure_subscription_id }}",
+          "logAnalyticsDefaultWorkspace": "{{ law_resource_id }}"
+        }
+      }
+    dest: /tmp/grafana-ds.json
+    mode: "0644"
+
+- name: Update Azure Monitor data source
+  ansible.builtin.command:
+    cmd: >-
+      az grafana data-source update
+      --name {{ grafana_name }}
+      --resource-group {{ azure_resource_group }}
+      --subscription {{ azure_subscription_id }}
+      --data-source azure-monitor-oob
+      --definition @/tmp/grafana-ds.json
+      --output none
+  changed_when: true
+
+- name: Generate dashboard JSON
+  ansible.builtin.template:
+    src: dashboard.json.j2
+    dest: /tmp/grafana-dashboard.json
+    mode: "0644"
+
+- name: Deploy Grafana dashboard
+  ansible.builtin.command:
+    cmd: >-
+      az grafana dashboard create
+      --name {{ grafana_name }}
+      --resource-group {{ azure_resource_group }}
+      --subscription {{ azure_subscription_id }}
+      --definition @/tmp/grafana-dashboard.json
+      --overwrite true
+      --output json
+  register: dashboard_result
+  changed_when: true
+
+- name: Store dashboard URL
+  ansible.builtin.set_fact:
+    dashboard_url: "{{ grafana_endpoint }}{{ (dashboard_result.stdout | from_json).url }}"
+
+- name: Clean up temporary files
+  ansible.builtin.file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /tmp/grafana-ds.json
+    - /tmp/grafana-dashboard.json
+
+- name: Display Grafana dashboard URL
+  ansible.builtin.debug:
+    msg: "Dashboard deployed: {{ dashboard_url }}"

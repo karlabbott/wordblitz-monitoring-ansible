@@ -1,0 +1,14 @@
+---
+- name: Create Log Analytics Workspace
+  azure.azcollection.azure_rm_loganalyticsworkspace:
+    name: "{{ law_name }}"
+    resource_group: "{{ azure_resource_group }}"
+    location: "{{ azure_location }}"
+    subscription_id: "{{ azure_subscription_id }}"
+    retention_in_days: 30
+  register: law_result
+
+- name: Store workspace ID
+  ansible.builtin.set_fact:
+    law_resource_id: "{{ law_result.id }}"
+    law_workspace_id: "{{ law_result.workspace_id }}"
