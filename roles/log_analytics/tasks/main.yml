@@ -11,4 +11,4 @@
 - name: Store workspace ID
   ansible.builtin.set_fact:
     law_resource_id: "{{ law_result.id }}"
-    law_workspace_id: "{{ law_result.workspace_id }}"
+    law_workspace_id: "{{ law_result.customer_id }}"

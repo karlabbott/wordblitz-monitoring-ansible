@@ -20,7 +20,7 @@
   ansible.builtin.command:
     cmd: >-
       az role assignment create
-      --assignee {{ grafana_principal_id }}
+      --assignee "{{ grafana_principal_id }}"
       --role "Monitoring Reader"
       --scope /subscriptions/{{ azure_subscription_id }}
       --subscription {{ azure_subscription_id }}
@@ -31,9 +31,20 @@
   ansible.builtin.command:
     cmd: >-
       az role assignment create
-      --assignee {{ grafana_principal_id }}
+      --assignee "{{ grafana_principal_id }}"
       --role "Log Analytics Reader"
-      --scope {{ law_resource_id }}
+      --scope "{{ law_resource_id }}"
+      --subscription {{ azure_subscription_id }}
+      --output none
+  changed_when: true
+
+- name: Grant Grafana Reader on resource group
+  ansible.builtin.command:
+    cmd: >-
+      az role assignment create
+      --assignee "{{ grafana_principal_id }}"
+      --role "Reader"
+      --scope /subscriptions/{{ azure_subscription_id }}/resourceGroups/{{ azure_resource_group }}
       --subscription {{ azure_subscription_id }}
       --output none
   changed_when: true
