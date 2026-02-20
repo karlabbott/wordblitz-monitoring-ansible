@@ -1,0 +1,17 @@
+---
+- name: Create Managed Grafana instance
+  ansible.builtin.command:
+    cmd: >-
+      az grafana create
+      --name {{ grafana_name }}
+      --resource-group {{ azure_resource_group }}
+      --location {{ azure_location }}
+      --subscription {{ azure_subscription_id }}
+      --output json
+  register: grafana_result
+  changed_when: true
+
+- name: Store Grafana details
+  ansible.builtin.set_fact:
+    grafana_principal_id: "{{ (grafana_result.stdout | from_json).identity.principalId }}"
+    grafana_endpoint: "{{ (grafana_result.stdout | from_json).properties.endpoint }}"

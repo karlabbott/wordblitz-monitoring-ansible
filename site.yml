@@ -25,10 +25,40 @@
           Required variables are not set. Copy group_vars/all.yml.example to
           group_vars/all.yml and fill in your values.
 
-  roles:
-    - log_analytics
-    - vm_identity
-    - azure_monitor_agent
-    - data_collection_rule
-    - vm_logging
-    - grafana
+  tasks:
+    - name: Create Grafana instance (started early — provisioning takes several minutes)
+      ansible.builtin.include_role:
+        name: grafana
+        tasks_from: create_instance
+      tags: [grafana]
+
+    - name: Set up Log Analytics Workspace
+      ansible.builtin.include_role:
+        name: log_analytics
+      tags: [log_analytics]
+
+    - name: Configure VM managed identities
+      ansible.builtin.include_role:
+        name: vm_identity
+      tags: [vm_identity]
+
+    - name: Install Azure Monitor Agent
+      ansible.builtin.include_role:
+        name: azure_monitor_agent
+      tags: [azure_monitor_agent]
+
+    - name: Set up Data Collection Rule
+      ansible.builtin.include_role:
+        name: data_collection_rule
+      tags: [data_collection_rule]
+
+    - name: Configure VM syslog forwarding
+      ansible.builtin.include_role:
+        name: vm_logging
+      tags: [vm_logging]
+
+    - name: Configure Grafana data source and deploy dashboard
+      ansible.builtin.include_role:
+        name: grafana
+        tasks_from: configure
+      tags: [grafana]
