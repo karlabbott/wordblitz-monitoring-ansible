@@ -25,10 +25,14 @@ app_vm_host: "5.6.7.8"
 ssh_user: "azureuser"
 
 # Computer names as they appear in Log Analytics
-# Run: az monitor log-analytics query --workspace <id> --analytics-query "Heartbeat | distinct Computer"
-# to discover these after initial data collection
+# IMPORTANT: Syslog and Perf tables often report different computer names.
+# Syslog typically uses the short hostname (e.g., "myvm"), while Perf uses
+# the FQDN (e.g., "myvm.example.com"). Run these queries after initial data
+# collection to discover the correct values:
+#   Syslog: az monitor log-analytics query --workspace <id> --analytics-query "Syslog | distinct Computer"
+#   Perf:   az monitor log-analytics query --workspace <id> --analytics-query "Perf | distinct Computer"
 db_vm_computer_name: "your-db-hostname"
-app_vm_computer_name: "your-app-hostname"
+app_vm_computer_name: "your-app-short-hostname"
 app_vm_perf_computer_name: "your-app-fqdn"
 
 # Perf counter sampling interval in seconds

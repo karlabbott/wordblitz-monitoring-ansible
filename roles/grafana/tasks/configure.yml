@@ -43,6 +43,7 @@
         "isDefault": true,
         "jsonData": {
           "azureAuthType": "msi",
+          "cloudName": "azuremonitor",
           "subscriptionId": "{{ azure_subscription_id }}",
           "logAnalyticsDefaultWorkspace": "{{ law_resource_id }}"
         }

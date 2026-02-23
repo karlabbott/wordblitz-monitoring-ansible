@@ -150,7 +150,7 @@
         "targets": [{
           "queryType": "Azure Log Analytics",
           "azureLogAnalytics": {
-            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"connection authorized\" or SyslogMessage contains \"connection received\"\n| summarize Connections = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
+            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"connection authenticated\" or SyslogMessage contains \"connection received\"\n| summarize Connections = count() by bin(TimeGenerated, 5m)\n| order by TimeGenerated asc",
             "resource": "{{ law_resource_id }}"
           },
           "subscription": "{{ azure_subscription_id }}"
@@ -195,7 +195,7 @@
         "targets": [{
           "queryType": "Azure Log Analytics",
           "azureLogAnalytics": {
-            "query": "Syslog\n| where SeverityLevel in (\"err\", \"crit\", \"alert\", \"emerg\", \"warning\")\n| summarize Count = count() by bin(TimeGenerated, 5m), Computer, SeverityLevel\n| order by TimeGenerated asc",
+            "query": "Syslog\n| where SeverityLevel in (\"error\", \"critical\", \"alert\", \"emergency\", \"warning\")\n| summarize Count = count() by bin(TimeGenerated, 5m), Computer, SeverityLevel\n| order by TimeGenerated asc",
             "resource": "{{ law_resource_id }}"
           },
           "subscription": "{{ azure_subscription_id }}"
