@@ -30,35 +30,49 @@
       ansible.builtin.include_role:
         name: grafana
         tasks_from: create_instance
+        apply:
+          tags: [grafana]
       tags: [grafana]
 
     - name: Set up Log Analytics Workspace
       ansible.builtin.include_role:
         name: log_analytics
+        apply:
+          tags: [log_analytics]
       tags: [log_analytics]
 
     - name: Configure VM managed identities
       ansible.builtin.include_role:
         name: vm_identity
+        apply:
+          tags: [vm_identity]
       tags: [vm_identity]
 
     - name: Install Azure Monitor Agent
       ansible.builtin.include_role:
         name: azure_monitor_agent
+        apply:
+          tags: [azure_monitor_agent]
       tags: [azure_monitor_agent]
 
     - name: Set up Data Collection Rule
       ansible.builtin.include_role:
         name: data_collection_rule
+        apply:
+          tags: [data_collection_rule]
       tags: [data_collection_rule]
 
     - name: Configure VM syslog forwarding
       ansible.builtin.include_role:
         name: vm_logging
+        apply:
+          tags: [vm_logging]
       tags: [vm_logging]
 
     - name: Configure Grafana data source and deploy dashboard
       ansible.builtin.include_role:
         name: grafana
         tasks_from: configure
+        apply:
+          tags: [grafana]
       tags: [grafana]
