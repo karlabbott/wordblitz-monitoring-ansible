@@ -10,7 +10,7 @@
   ansible.builtin.command:
     cmd: >-
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
-      "sudo sed -i 's/\r$//' /tmp/chaos.sh && sudo mv /tmp/chaos.sh /usr/local/bin/chaos.sh && sudo chmod +x /usr/local/bin/chaos.sh"
+      "sudo mv /tmp/chaos.sh /usr/local/bin/chaos.sh && sudo chmod +x /usr/local/bin/chaos.sh"
 
 - name: Ensure atd is running on DB VM
   ansible.builtin.command:
