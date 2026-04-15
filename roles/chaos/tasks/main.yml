@@ -1,0 +1,25 @@
+---
+- name: Upload chaos script to DB VM
+  ansible.builtin.command:
+    cmd: >-
+      scp -o StrictHostKeyChecking=no
+      {{ role_path }}/files/chaos.sh
+      {{ ssh_user }}@{{ db_vm_host }}:/tmp/chaos.sh
+
+- name: Install chaos script on DB VM
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
+      "sudo mv /tmp/chaos.sh /usr/local/bin/chaos.sh && sudo chmod +x /usr/local/bin/chaos.sh"
+
+- name: Ensure atd is running on DB VM
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
+      "sudo dnf install -y at && sudo systemctl enable --now atd"
+
+- name: Schedule chaos to fire in {{ chaos_delay_minutes }} minutes
+  ansible.builtin.command:
+    cmd: >-
+      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
+      "echo '/usr/local/bin/chaos.sh' | at now + {{ chaos_delay_minutes }} minutes"

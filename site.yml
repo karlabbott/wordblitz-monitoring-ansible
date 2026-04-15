@@ -76,3 +76,8 @@
         apply:
           tags: [grafana]
       tags: [grafana]
+
+    - name: Stage chaos scenario
+      ansible.builtin.include_role:
+        name: chaos
+      tags: [chaos]

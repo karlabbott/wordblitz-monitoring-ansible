@@ -61,3 +61,6 @@ syslog_log_levels:
   - Critical
   - Alert
   - Emergency
+
+# Chaos scenario delay (minutes after playbook completes)
+chaos_delay_minutes: 3
