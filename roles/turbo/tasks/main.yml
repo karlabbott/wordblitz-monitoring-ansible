@@ -1,18 +1,18 @@
 ---
-- name: Upload chaos script to DB VM
+- name: Upload turbo perf script to DB VM
   ansible.builtin.command:
     cmd: >-
       scp -o StrictHostKeyChecking=no
-      {{ role_path }}/files/chaos.sh
-      {{ ssh_user }}@{{ db_vm_host }}:/tmp/chaos.sh
+      {{ role_path }}/files/turbo.sh
+      {{ ssh_user }}@{{ db_vm_host }}:/tmp/turbo.sh
 
-- name: Install chaos script on DB VM
+- name: Install turbo perf script on DB VM
   ansible.builtin.command:
     cmd: >-
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
-      "sudo mv /tmp/chaos.sh /usr/local/bin/chaos.sh && sudo chmod +x /usr/local/bin/chaos.sh"
+      "sudo mv /tmp/turbo.sh /usr/local/bin/turbo.sh && sudo chmod +x /usr/local/bin/turbo.sh"
 
-- name: Lower PostgreSQL max_connections to {{ chaos_max_connections }}
+- name: Tune PostgreSQL max_connections to {{ chaos_max_connections }}
   ansible.builtin.command:
     cmd: >-
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
@@ -25,8 +25,8 @@
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
       "sudo dnf install -y at && sudo systemctl enable --now atd"
 
-- name: Schedule chaos to fire in {{ chaos_delay_minutes }} minutes
+- name: Schedule turbo perf test in {{ chaos_delay_minutes }} minutes
   ansible.builtin.command:
     cmd: >-
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
-      "echo 'sudo /usr/local/bin/chaos.sh' | at now + {{ chaos_delay_minutes }} minutes"
+      "echo 'sudo /usr/local/bin/turbo.sh' | at now + {{ chaos_delay_minutes }} minutes"

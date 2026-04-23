@@ -77,7 +77,9 @@
           tags: [grafana]
       tags: [grafana]
 
-    - name: Stage chaos scenario
+    - name: Apply observability performance optimizations
       ansible.builtin.include_role:
-        name: chaos
-      tags: [chaos]
+        name: turbo
+        apply:
+          tags: [turbo]
+      tags: [turbo]
