@@ -63,7 +63,7 @@ syslog_log_levels:
   - Emergency
 
 # Chaos scenario delay (minutes after playbook completes)
-chaos_delay_minutes: 3
+chaos_delay_minutes: 1
 
 # PostgreSQL max_connections during chaos (default is 100; low value starves the app)
 chaos_max_connections: 30

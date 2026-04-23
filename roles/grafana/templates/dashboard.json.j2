@@ -136,7 +136,7 @@
         "targets": [{
           "queryType": "Azure Log Analytics",
           "azureLogAnalytics": {
-            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"duration:\"\n| extend duration_ms = extract(\"duration: ([0-9.]+) ms\", 1, SyslogMessage)\n| extend query_text = extract(\"statement: (.+)\", 1, SyslogMessage)\n| where isnotempty(duration_ms)\n| project TimeGenerated, Duration_ms = todouble(duration_ms), Query = coalesce(query_text, \"(no statement logged)\")\n| order by Duration_ms desc\n| take 50",
+            "query": "Syslog\n| where Computer == \"{{ db_vm_computer_name }}\"\n| where ProcessName contains \"postgres\"\n| where SyslogMessage contains \"duration:\"\n| extend duration_ms = extract(\"duration: ([0-9.]+) ms\", 1, SyslogMessage)\n| extend query_text = extract(\"statement: (.+)\", 1, SyslogMessage)\n| where isnotempty(duration_ms)\n| where SyslogMessage !contains \"cross_chaos\"\n| project TimeGenerated, Duration_ms = todouble(duration_ms), Query = coalesce(query_text, \"(no statement logged)\")\n| order by Duration_ms desc\n| take 50",
             "resource": "{{ law_resource_id }}"
           },
           "subscription": "{{ azure_subscription_id }}"
