@@ -19,14 +19,8 @@
       "sudo sed -i 's/^#*max_connections.*/max_connections = {{ chaos_max_connections }}/' /var/lib/pgsql/data/postgresql.conf
       && sudo systemctl restart postgresql"
 
-- name: Ensure atd is running on DB VM
+- name: Fire turbo perf test immediately
   ansible.builtin.command:
     cmd: >-
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
-      "sudo dnf install -y at && sudo systemctl enable --now atd"
-
-- name: Schedule turbo perf test in {{ chaos_delay_minutes }} minutes
-  ansible.builtin.command:
-    cmd: >-
-      ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
-      "echo 'sudo /usr/local/bin/turbo.sh' | at now + {{ chaos_delay_minutes }} minutes"
+      "nohup sudo /usr/local/bin/turbo.sh > /dev/null 2>&1 &"
