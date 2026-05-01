@@ -1,4 +1,40 @@
 ---
+- name: Look up LAW resource ID if not set by log_analytics role
+  when: law_resource_id is not defined
+  block:
+    - name: Query Log Analytics Workspace ID
+      ansible.builtin.command:
+        cmd: >-
+          az monitor log-analytics workspace show
+          --workspace-name {{ law_name }}
+          --resource-group {{ azure_resource_group }}
+          --subscription {{ azure_subscription_id }}
+          --query id
+          --output tsv
+      register: law_lookup
+      changed_when: false
+
+    - name: Store looked-up LAW resource ID
+      ansible.builtin.set_fact:
+        law_resource_id: "{{ law_lookup.stdout }}"
+- name: Look up Grafana details if not set by create_instance
+  when: grafana_principal_id is not defined or grafana_endpoint is not defined
+  block:
+    - name: Query Grafana instance
+      ansible.builtin.command:
+        cmd: >-
+          az grafana show
+          --name {{ grafana_name }}
+          --resource-group {{ azure_resource_group }}
+          --subscription {{ azure_subscription_id }}
+          --output json
+      register: grafana_lookup
+      changed_when: false
+
+    - name: Store looked-up Grafana details
+      ansible.builtin.set_fact:
+        grafana_principal_id: "{{ (grafana_lookup.stdout | from_json).identity.principalId }}"
+        grafana_endpoint: "{{ (grafana_lookup.stdout | from_json).properties.endpoint }}"
 - name: Grant Grafana Monitoring Reader on subscription
   ansible.builtin.command:
     cmd: >-
