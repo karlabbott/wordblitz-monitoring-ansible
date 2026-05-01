@@ -18,6 +18,7 @@
       "
   register: pg_syslog_result
   changed_when: "'EXISTS' not in pg_syslog_result.stdout"
+  ignore_errors: true
 
 - name: Configure Nginx syslog logging on App VM
   ansible.builtin.command:
@@ -31,6 +32,7 @@
       "
   register: nginx_syslog_result
   changed_when: "'EXISTS' not in nginx_syslog_result.stdout"
+  ignore_errors: true
 
 - name: Restart rsyslog on DB VM to pick up AMA config
   ansible.builtin.command:
@@ -38,6 +40,7 @@
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ db_vm_host }}
       "sudo systemctl restart rsyslog"
   changed_when: true
+  ignore_errors: true
 
 - name: Restart rsyslog on App VM to pick up AMA config
   ansible.builtin.command:
@@ -45,3 +48,4 @@
       ssh -o StrictHostKeyChecking=no {{ ssh_user }}@{{ app_vm_host }}
       "sudo systemctl restart rsyslog"
   changed_when: true
+  ignore_errors: true
