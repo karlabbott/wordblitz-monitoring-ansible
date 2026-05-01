@@ -62,13 +62,6 @@
           tags: [data_collection_rule]
       tags: [data_collection_rule]
 
-    - name: Configure VM syslog forwarding
-      ansible.builtin.include_role:
-        name: vm_logging
-        apply:
-          tags: [vm_logging]
-      tags: [vm_logging]
-
     - name: Configure Grafana data source and deploy dashboard
       ansible.builtin.include_role:
         name: grafana
@@ -76,6 +69,14 @@
         apply:
           tags: [grafana]
       tags: [grafana]
+
+    - name: Configure VM syslog forwarding (may fail if PostgreSQL not yet installed)
+      ansible.builtin.include_role:
+        name: vm_logging
+        apply:
+          tags: [vm_logging]
+      tags: [vm_logging]
+      ignore_errors: true
 
     - name: Apply observability performance optimizations
       ansible.builtin.include_role:
