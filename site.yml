@@ -31,8 +31,8 @@
         name: grafana
         tasks_from: create_instance
         apply:
-          tags: [grafana]
-      tags: [grafana]
+          tags: [grafana, grafana_create]
+      tags: [grafana, grafana_create]
 
     - name: Set up Log Analytics Workspace
       ansible.builtin.include_role:
@@ -67,8 +67,8 @@
         name: grafana
         tasks_from: configure
         apply:
-          tags: [grafana]
-      tags: [grafana]
+          tags: [grafana, grafana_configure]
+      tags: [grafana, grafana_configure]
 
     - name: Configure VM syslog forwarding (may fail if PostgreSQL not yet installed)
       ansible.builtin.include_role:
